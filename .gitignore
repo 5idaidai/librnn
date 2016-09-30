@@ -1,0 +1,22 @@
+# Folders
+bin/
+build/
+coverage/
+data/
+docs/
+examples/
+include/googletest/
+latex/
+perf/
+scripts/
+spike/
+test/
+
+# Files
+.gdb_history
+.clang_complete
+.DS_Store
+
+# C++
+*.o
+*.a
