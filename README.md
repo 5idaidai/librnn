@@ -16,41 +16,41 @@ The `var<T>` class is a wrapper over the data being used by librnn. Some of its 
 ## TODO
 
 ### Library Features
-[ ] add ability to save and load checkpoints in training
-[ ] speed optimization (https://github.com/tiny-dnn/tiny-dnn/pull/193)
-[ ] random weights init should take doubles, not template typename.
+- [ ] add ability to save and load checkpoints in training
+- [ ] speed optimization (https://github.com/tiny-dnn/tiny-dnn/pull/193)
+- [ ] random weights init should take doubles, not template typename.
 
 ### Library Misc.
-[ ] Reduce memory usage
-[ ] Review tensor implementation (cnhw)
-[ ] Add code for benchmarking
-[ ] Implement tests for the operations forwards/backwards
-[ ] Set up .clang_format (so all imports, namespace, and includes follow same style)
-[ ] include-what-you-use
-[ ] Decide on namespace
-[ ] Run performance tests
+- [ ] Reduce memory usage
+- [ ] Review tensor implementation (cnhw)
+- [ ] Add code for benchmarking
+- [ ] Implement tests for the operations forwards/backwards
+- [ ] Set up .clang_format (so all imports, namespace, and includes follow same style)
+- [ ] include-what-you-use
+- [ ] Decide on namespace
+- [ ] Run performance tests
 
 ### GPU Support
-[ ] Add CUDA code for operations
-[ ] handle moving data between cpu and gpu (SyncedMem)
+- [ ] Add CUDA code for operations
+- [ ] handle moving data between cpu and gpu (SyncedMem)
 
 ### Types of RNNs
-[x] RNN
-[x] LSTM
-[ ] GRU
-[ ] Bidirectional RNN
-[ ] Neural Stack Machine
-[ ] Neural Turing Machine
-[ ] [RNN-EM](http://arxiv.org/abs/1506.00195)
-[ ] [Hierarchical Multiscale Recurrent Neural Networks](https://arxiv.org/abs/1609.01704)
+- [x] RNN
+- [x] LSTM
+- [ ] GRU
+- [ ] Bidirectional RNN
+- [ ] Neural Stack Machine
+- [ ] Neural Turing Machine
+- [ ] [RNN-EM](http://arxiv.org/abs/1506.00195)
+- [ ] [Hierarchical Multiscale Recurrent Neural Networks](https://arxiv.org/abs/1609.01704)
 
 ### RNN Features
-[ ] Highway Networks
-[ ] Recurrent Highway Networks
-[ ] Multiplicative Integration Within RNNs
-[ ] Recurrent Dropout Without Memory Loss
-[ ] Layer Normalization
-[ ] Layer Normalization
-[ ] LSTM With Multiple Memory Arrays
-[ ] Minimal Gated Unit Recurrent Neural Network
-[ ] GRU Mutants
+- [ ] Highway Networks
+- [ ] Recurrent Highway Networks
+- [ ] Multiplicative Integration Within RNNs
+- [ ] Recurrent Dropout Without Memory Loss
+- [ ] Layer Normalization
+- [ ] Layer Normalization
+- [ ] LSTM With Multiple Memory Arrays
+- [ ] Minimal Gated Unit Recurrent Neural Network
+- [ ] GRU Mutants
