@@ -1,0 +1,468 @@
+#include "concurrent/train/optimization.hpp"
+
+// using std::vector;
+// #define PARAM_KEY_FOR_LOOKUP_TABLE &MAT(param)
+#define MAT(matrix) ((matrix).mutable_cpu_data())
+#define GRAD(matrixd) ((matrixd).mutable_cpu_diff())
+#define PARAM_KEY_FOR_LOOKUP_TABLE &MAT(param)
+
+namespace concurrent {
+namespace train {
+
+bool nan_protection = true;
+
+template <typename R>
+void create_cache(var<R>& param, std::unordered_map<cache_key_t<R>, cache_t<R>>& caches) {
+  if (caches.count(PARAM_KEY_FOR_LOOKUP_TABLE) == 0) {
+    // auto new_cache = caches.emplace( std::piecewise_construct, std::forward_as_tuple(PARAM_KEY_FOR_LOOKUP_TABLE), std::forward_as_tuple(param.dims(0), param.dims(1)));
+    // initialize values for step cache to zero:
+    // new_cache.first->second.clear();
+  }
+}
+
+template <typename R>
+void create_cache(std::vector<var<R>>& params, std::unordered_map<cache_key_t<R>, cache_t<R>>& caches) {
+  for (auto& param : params) {
+    // create_cache(param, caches);
+  }
+}
+
+template <typename R>
+void reset_cache(var<R>& param, std::unordered_map<cache_key_t<R>, cache_t<R>>& caches) {
+  // auto& s = caches.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+  // s.clear();
+}
+
+template <typename R>
+void reset_cache(std::vector<var<R>>& params, std::unordered_map<cache_key_t<R>, cache_t<R>>& caches) {
+  for (auto& param : params) {
+    reset_cache(param, caches);
+  }
+}
+
+/* Abstract Solver */
+template <typename R>
+AbstractSolver<R>::AbstractSolver()
+    : clip_norm(0),
+      clip_abs(0),
+      smooth_eps(SMOOTH_DEFAULT),
+      regc(0.0),
+      method(METHOD_UNINITIALIZED) {
+}
+
+template <typename R>
+AbstractSolver<R>::AbstractSolver(R _clip_norm,
+                                  R      _smooth_eps,
+                                  R      _regc,
+                                  Method _method)
+    : clip_norm(_clip_norm),
+      clip_abs(0),
+      smooth_eps(_smooth_eps),
+      regc(_regc),
+      method(_method) {
+}
+
+template <typename R>
+void AbstractSolver<R>::reset_caches(std::vector<var<R>>& parameters) {}
+template <typename R>
+void AbstractSolver<R>::create_gradient_caches(std::vector<var<R>>& parameters) {}
+
+/* SGD */
+template <typename R>
+SGD<R>::SGD(R clip_norm, R regc)
+    : AbstractSolver<R>(clip_norm, 0.0, regc, METHOD_SGD) {
+}
+
+template <typename R>
+SGD<R>::SGD(
+    std::vector<var<R>>& parameters,
+    R                    clip_norm,
+    R regc)
+    : AbstractSolver<R>(clip_norm, 0.0, regc, METHOD_SGD){};
+
+template <typename R>
+void SGD<R>::step(std::vector<var<R>>& parameters, R step_size) {
+  for (auto& param : parameters) {
+    if (nan_protection && param.is_grad_nan()) {
+      std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+    } else {
+      concurrent::operation<R>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+      concurrent::operation<R>::sgd_update(param, step_size);
+    }
+    // reset gradient
+    // GRAD(param).clear();
+  }
+}
+
+template <typename R>
+void SGD<R>::step(std::vector<var<R>>& parameters) {
+  return step(parameters, this->step_size);
+}
+
+template class SGD<float>;
+template class SGD<double>;
+
+// /* AdaGrad */
+// template <typename R>
+// AdaGrad<R>::AdaGrad(
+//     R smooth_eps,
+//     R clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADAGRAD) {
+// }
+
+// template <typename R>
+// AdaGrad<R>::AdaGrad(
+//     std::vector<var<R>>& parameters,
+//     R                    smooth_eps,
+//     R                    clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADAGRAD) {
+//   create_gradient_caches(parameters);
+// }
+
+// template <typename R>
+// void AdaGrad<R>::create_gradient_caches(
+//     std::vector<var<R>>& parameters) {
+//   create_cache(parameters, gsums);
+// }
+
+// template <typename R>
+// void AdaGrad<R>::reset_caches(
+//     std::vector<var<R>>& parameters) {
+//   reset_cache(parameters, gsums);
+// }
+
+// template <typename R>
+// void AdaGrad<R>::step(
+//     std::vector<var<R>>& parameters,
+//     R step_size) {
+//   for (auto& param : parameters) {
+//     if (nan_protection && param.is_grad_nan()) {
+//       std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+//     } else {
+//       auto& s = gsums.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+
+//       concurrent::operation<Real>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+//       concurrent::operation<Real>::adagrad_update(param, s, step_size, this->smooth_eps);
+//     }
+
+//     // reset gradient
+//     GRAD(param)
+//         .clear();
+//   }
+// }
+
+// template <typename R>
+// void AdaGrad<R>::step(
+//     std::vector<var<R>>& parameters) {
+//   return step(parameters, this->step_size);
+// }
+
+// template class AdaGrad<float>;
+// template class AdaGrad<double>;
+
+// /* RMSProp */
+// template <typename R>
+// RMSProp<R>::RMSProp(
+//     R _decay_rate,
+//     R smooth_eps,
+//     R clip_norm,
+//     R regc)
+//     : AdaGrad<R>(smooth_eps, clip_norm, regc),
+//       decay_rate(_decay_rate) {
+//   this->method = METHOD_RMSPROP;
+// }
+
+// template <typename R>
+// RMSProp<R>::RMSProp(
+//     std::vector<var<R>>& parameters,
+//     R                    _decay_rate,
+//     R                    smooth_eps,
+//     R                    clip_norm,
+//     R regc)
+//     : AdaGrad<R>(parameters, smooth_eps, clip_norm, regc),
+//       decay_rate(_decay_rate) {
+//   this->method = METHOD_RMSPROP;
+// }
+
+// template <typename R>
+// void RMSProp<R>::step(
+//     std::vector<var<R>>& parameters,
+//     R step_size) {
+//   for (auto& param : parameters) {
+//     if (nan_protection && param.is_grad_nan()) {
+//       std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+//     } else {
+//       auto& s = this->gsums[PARAM_KEY_FOR_LOOKUP_TABLE];
+
+//       concurrent::operation<Real>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+//       concurrent::operation<Real>::rmsprop_update(param, s, decay_rate, step_size, this->smooth_eps);
+//     }
+
+//     // reset gradient
+//     GRAD(param)
+//         .clear();
+//     DEBUG_ASSERT_NOT_NAN(MAT(param));
+//   }
+// }
+
+// template <typename R>
+// void RMSProp<R>::step(
+//     std::vector<var<R>>& parameters) {
+//   return step(parameters, step_size);
+// }
+
+// template class RMSProp<float>;
+// template class RMSProp<double>;
+
+/* RMSPropMomentum */
+template <typename R>
+RMSPropMomentum<R>::RMSPropMomentum(
+    R decay_rate,
+    R momentum,
+    R step_size,
+    R smooth_eps,
+    R clip_norm,
+    R regc)
+    : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_RMSPROPMOMENTUM),
+      decay_rate(decay_rate),
+      momentum(momentum),
+      step_size(step_size) {
+}
+
+template <typename R>
+RMSPropMomentum<R>::RMSPropMomentum(
+    std::vector<var<R>>& parameters,
+    R                    decay_rate,
+    R                    momentum,
+    R                    step_size,
+    R                    smooth_eps,
+    R                    clip_norm,
+    R regc)
+    : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_RMSPROPMOMENTUM),
+      decay_rate(decay_rate),
+      momentum(momentum),
+      step_size(step_size) {
+  create_gradient_caches(parameters);
+}
+
+template <typename R>
+void RMSPropMomentum<R>::create_gradient_caches(std::vector<var<R>>& parameters) {
+  create_cache(parameters, n_cache);
+  create_cache(parameters, g_cache);
+  create_cache(parameters, momentum_cache);
+}
+
+template <typename R>
+void RMSPropMomentum<R>::reset_caches(std::vector<var<R>>& parameters) {
+  reset_cache(parameters, n_cache);
+  reset_cache(parameters, g_cache);
+  reset_cache(parameters, momentum_cache);
+}
+
+template <typename R>
+void RMSPropMomentum<R>::step(std::vector<var<R>>& parameters, R step_size_override) {
+  for (auto& param : parameters) {
+    if (nan_protection && param.is_grad_nan()) {
+      std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+    } else {
+      // auto& n = n_cache.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+      // auto& g = g_cache.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+      // auto& m = momentum_cache.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+
+      concurrent::operation<R>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+      // concurrent::operation<R>::rmsprop_momentum_update(
+      //     param, n, g, m, decay_rate, momentum,
+      //     step_size_override, this->smooth_eps);
+    }
+
+    // reset gradient
+    // GRAD(param).clear();
+  }
+}
+
+template <typename R>
+void RMSPropMomentum<R>::step(std::vector<var<R>>& parameters) {
+  return step(parameters, this->step_size);
+}
+
+template class RMSPropMomentum<float>;
+template class RMSPropMomentum<double>;
+
+// /* AdaDelta */
+// template <typename R>
+// AdaDelta<R>::AdaDelta(
+//     R _rho,
+//     R smooth_eps,
+//     R clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADADELTA),
+//       rho(_rho) {
+// }
+
+// template <typename R>
+// AdaDelta<R>::AdaDelta(
+//     std::vector<var<R>>& parameters,
+//     R                    _rho,
+//     R                    smooth_eps,
+//     R                    clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADADELTA),
+//       rho(_rho) {
+//   create_gradient_caches(parameters);
+// }
+
+// template <typename R>
+// void AdaDelta<R>::create_gradient_caches(
+//     std::vector<var<R>>& parameters) {
+//   create_cache(parameters, gsums);
+//   create_cache(parameters, xsums);
+// }
+
+// template <typename R>
+// void AdaDelta<R>::reset_caches(
+//     std::vector<var<R>>& parameters) {
+//   reset_cache(parameters, gsums);
+//   reset_cache(parameters, xsums);
+// }
+
+// template <typename R>
+// void AdaDelta<R>::step(std::vector<var<R>>& parameters) {
+//   for (auto& param : parameters) {
+//     if (nan_protection && param.is_grad_nan()) {
+//       std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+//     } else {
+//       auto& gsum = gsums.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+//       auto& xsum = xsums.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+
+//       concurrent::operation<Real>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+//       concurrent::operation<Real>::adadelta_update(param, gsum, xsum, rho, this->smooth_eps);
+//     }
+
+//     // reset gradient
+//     GRAD(param)
+//         .clear();
+
+//     DEBUG_ASSERT_NOT_NAN(GET_MAT(param));
+//   }
+// }
+
+// template class AdaDelta<float>;
+// template class AdaDelta<double>;
+
+// /* Adam */
+// template <typename R>
+// Adam<R>::Adam(
+//     R _step_size,
+//     R _b1,
+//     R _b2,
+//     R smooth_eps,
+//     R clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADAM),
+//       step_size(_step_size),
+//       b1(_b1),
+//       b2(_b2),
+//       epoch(0) {
+// }
+
+// template <typename R>
+// Adam<R>::Adam(
+//     std::vector<var<R>>& parameters,
+//     R                    _step_size,
+//     R                    _b1,
+//     R                    _b2,
+//     R                    smooth_eps,
+//     R                    clip_norm,
+//     R regc)
+//     : AbstractSolver<R>(clip_norm, smooth_eps, regc, METHOD_ADAM),
+//       step_size(_step_size),
+//       b1(_b1),
+//       b2(_b2),
+//       epoch(0) {
+//   create_gradient_caches(parameters);
+// }
+
+// template <typename R>
+// void Adam<R>::create_gradient_caches(
+//     std::vector<var<R>>& parameters) {
+//   create_cache(parameters, gsums);
+//   create_cache(parameters, xsums);
+// }
+
+// template <typename R>
+// void Adam<R>::reset_caches(
+//     std::vector<var<R>>& parameters) {
+//   reset_cache(parameters, gsums);
+//   reset_cache(parameters, xsums);
+//   epoch = 0;
+// }
+
+// template <typename R>
+// void Adam<R>::step(std::vector<var<R>>& parameters, R step_size) {
+//   // increase timesteps:
+//   epoch += 1;
+
+//   for (auto& param : parameters) {
+//     if (nan_protection && param.is_grad_nan()) {
+//       std::cout << "WARNING: Ignoring gradient update because of NaNs." << std::endl;
+//     } else {
+//       auto& m = gsums.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+//       auto& v = xsums.at(PARAM_KEY_FOR_LOOKUP_TABLE);
+
+//       concurrent::operation<Real>::clip_and_regularize(param, this->clip_abs, this->clip_norm, this->regc);
+
+//       concurrent::operation<Real>::adam_update(param, m, v, b1, b2, this->smooth_eps, step_size, epoch);
+//     }
+
+//     // reset gradient
+//     GRAD(param)
+//         .clear();
+//   }
+// }
+
+// template <typename R>
+// void Adam<R>::step(std::vector<var<R>>& parameters) {
+//   return step(parameters, step_size);
+// }
+
+template <typename R>
+std::shared_ptr<AbstractSolver<R>> construct(
+    std::string          solver_name,
+    std::vector<var<R>>& params,
+    R                    step_size,
+    R regc) {
+  std::shared_ptr<AbstractSolver<R>> solver;
+  std::transform(solver_name.begin(), solver_name.end(), solver_name.begin(), ::tolower);
+  if (solver_name == "adadelta") {
+    // solver = std::make_shared<AdaDelta<R>>(params, 0.95, 1e-4, 100.0, regc);
+  } else if (solver_name == "adam") {
+    // solver = std::make_shared<Adam<R>>(params, step_size, 0.55, 1e-6, 1e-9, 100.0, regc);
+  } else if (solver_name == "sgd") {
+    solver = std::make_shared<SGD<R>>(params, 100.0, regc);
+    dynamic_cast<SGD<R>*>(solver.get())->step_size = step_size;
+  } else if (solver_name == "adagrad") {
+    // solver = std::make_shared<AdaGrad<R>>(params, 1e-9, 100.0, regc);
+    // dynamic_cast<train::AdaGrad<R>*>(solver.get())->step_size = step_size;
+  } else if (solver_name == "rmsprop") {
+    // solver = std::make_shared<RMSProp<R>>(params, 0.999, 1e-9, 100.0, regc);
+    // dynamic_cast<train::RMSProp<R>*>(solver.get())->step_size = step_size;
+  } else if (solver_name == "rmspropmomentum") {
+    solver = std::make_shared<RMSPropMomentum<R>>(params);
+    dynamic_cast<train::RMSPropMomentum<R>*>(solver.get())->step_size = step_size;
+    dynamic_cast<train::RMSPropMomentum<R>*>(solver.get())->regc = regc;
+  } else {
+    std::cout << "Did not recognize this solver type.\n";
+  }
+  return solver;
+}
+
+template std::shared_ptr<AbstractSolver<float>>  construct(std::string solver_name, std::vector<var<float>>& params, float learning_rate, float regc);
+template std::shared_ptr<AbstractSolver<double>> construct(std::string solver_name, std::vector<var<double>>& params, double learning_rate, double regc);
+
+// template class Adam<float>;
+// template class Adam<double>;
+
+}  // namespace train
+}  // namespace concurrent
