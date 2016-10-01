@@ -1,0 +1,29 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - clang
+  - gcc
+
+before_install:
+  - echo $LANG
+  - echo $LC_ALL
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-6.2
+    - g++-6.2
+    - clang
+
+script: make -j2
+
+matrix:
+  exclude: # On OSX g++ is a symlink to clang++ by default 
+    - os: osx
+      compiler: gcc

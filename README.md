@@ -5,13 +5,13 @@ Overview
 --------
 
 ## librnn
-librnn has no dependencies for CPU support and only requires CUDA libraries for GPU support.
+librnn has no dependencies for CPU support and only requires CUDA libraries for GPU support. It has been tested with gcc 6.2.0 and clang 3.8.0.
 
 librnn's main goal is to provide interfaces to easily model with RNNs. Support for various types of RNNs is already included and more will be added. Language modeling and other sequence to sequence models will be added to the examples folder.
 
 ## `var<T>`
 
-The `var<T>` class is a wrapper over the data being used by librnn. Some of its semantics are similar to Caffe's Blob, including how it synchronizes data between the CPU and GPU. A `var` is an N-dimensional array that can hold any type of data; e.g., weights, images, derivatives, etc. `var`'s are also overloaded to be able to perform operations between them. As the operations are performed a symbolic graph is produced to automatically calculate the derivatives by using automatic differentiation. As a result, adding new layers in librnn is very simple. If no new operations are needed, one only needs to define the forward pass and librnn will handle the backwards pass automatically similar to other popular machine learning frameowkrs (e.g. torch-autograd, theano, etc.).
+The `var<T>` class is a wrapper over the data being used by librnn. Some of its semantics are similar to Caffe's Blob, including how it synchronizes data between the CPU and GPU. A `var` is an N-dimensional array that can hold any type of data; e.g., weights, images, derivatives, etc. `var`'s are also overloaded to be able to perform operations between them. As the operations are performed a symbolic graph is produced to automatically calculate the derivatives by using automatic differentiation. As a result, adding new layers in librnn is very simple. If no new operations are needed, one only needs to define the forward pass and librnn will handle the backwards pass automatically similar to other popular machine learning frameworks (e.g. torch-autograd, theano, etc.).
 
 ## TODO
 
@@ -29,6 +29,7 @@ The `var<T>` class is a wrapper over the data being used by librnn. Some of its 
 - [ ] include-what-you-use
 - [ ] Decide on namespace
 - [ ] Run performance tests
+- [ ] Set up continuous integration on travis
 
 ### GPU Support
 - [ ] Add CUDA code for operations
