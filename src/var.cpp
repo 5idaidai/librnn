@@ -38,6 +38,9 @@ var<Real>::var(const int num, const int channels, const int height, const int wi
 }
 
 template <typename Real>
+var<Real>::var(Real num) : var({1,1,1,1}, concurrent::initializer::constant<Real>(num)) {}
+
+template <typename Real>
 var<Real>::var(const std::vector<int>& shape) {
   reshape(shape);
 }
@@ -99,10 +102,16 @@ Real& var<Real>::at(const int index, bool diff) {
   return data_blob[index];
 }
 
-// template <typename Real>
-// var<Real> var<Real>::operator-() {
-//   return (*this) * static_cast<Real>(-1.0);
-// }
+template <typename Real>
+Real var<Real>::diff_at(const int index) {
+  const Real* diff_blob = this->cpu_diff();
+  return diff_blob[index];
+}
+
+template <typename Real>
+var<Real> var<Real>::operator-() {
+  return (*this) * static_cast<Real>(-1.0);
+}
 
 template <typename Real>
 var<Real> var<Real>::operator%(const var<Real>& rhs) const {
@@ -129,15 +138,15 @@ var<Real> var<Real>::operator/(const var<Real>& rhs) const {
   return concurrent::operation<Real>::div(*this, rhs);
 }
 
-// template <typename Real>
-// var<Real> var<Real>::operator+(Real alpha) const {
-//   return concurrent::operation<Real>::add(*this, alpha);
-// }
+template <typename Real>
+var<Real> var<Real>::operator+(Real alpha) const {
+  return concurrent::operation<Real>::add(*this, alpha);
+}
 
-// template <typename Real>
-// var<Real> var<Real>::operator*(Real alpha) const {
-//   return concurrent::operation<Real>::mul(*this, alpha);
-// }
+template <typename Real>
+var<Real> var<Real>::operator*(Real alpha) const {
+  return concurrent::operation<Real>::mul(*this, alpha);
+}
 
 // template <typename Real>
 // var<Real> var<Real>::operator-(Real alpha) const {

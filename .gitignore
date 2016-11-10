@@ -10,12 +10,12 @@ latex/
 perf/
 scripts/
 spike/
-test/
 
 # Files
 .gdb_history
 .clang_complete
 .DS_Store
+compile_commands.json
 
 # C++
 *.o

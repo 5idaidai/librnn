@@ -249,7 +249,7 @@ void lstm() {
 
 void char_rnn() {
   // data I/O
-  std::ifstream data_file("data/ascii.txt");
+  std::ifstream data_file("data/news.txt");
   std::stringstream buffer;
   buffer << data_file.rdbuf();
   data_file.close();

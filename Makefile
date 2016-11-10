@@ -11,7 +11,7 @@ ifeq ($(UNAME), Linux)
 	LIB := -lblas
 endif
 ifeq ($(UNAME), Darwin)
-	CC  := clang++
+	CC  := g++
 	LIB := -framework Accelerate
 endif
 

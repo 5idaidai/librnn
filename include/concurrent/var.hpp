@@ -21,6 +21,7 @@ class var {
   var() { var(1, 1, 1, 1); }
   var(const int num, const int channels, const int height, const int width);
   explicit var(const std::vector<int>& shape);
+  var(Real num);
 
   void reshape(const std::vector<int>& shape);
   void reshape(const int num, const int channels, const int height, const int width);
@@ -43,6 +44,7 @@ class var {
 
   Real& operator[](const int index);
   Real& at(const int index, bool diff = false);
+  Real  diff_at(const int index);
 
   // arithmetic op overloads (const after func?)
   var<Real>  operator-();
@@ -57,10 +59,10 @@ class var {
   var<Real>  operator*(Real alpha) const;
   var<Real>  operator/(Real alpha) const;
 
-  var<Real>&  operator+(Real alpha);
-  var<Real>&  operator-(Real alpha);
-  var<Real>&  operator*(Real alpha);
-  var<Real>&  operator/(Real alpha);
+  // var<Real>&  operator+(Real alpha);
+  // var<Real>&  operator-(Real alpha);
+  // var<Real>&  operator*(Real alpha);
+  // var<Real>&  operator/(Real alpha);
 
   var<Real>& operator+=(const var<Real>& rhs);
   var<Real>& operator*=(const var<Real>& rhs);

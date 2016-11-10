@@ -27,7 +27,7 @@ lstm<T>::lstm(int param_hidden_size, int param_data_size, int param_seq_length) 
 
 template <typename T>
 lstm<T>::~lstm() {
-  DBGLINE();
+  // DBGLINE();
   del_help(data_);  //
   del_help(label_);
   // del_help(w_a);    //
@@ -51,7 +51,7 @@ lstm<T>::~lstm() {
   // del_help(output);
   // del_help(state);  //
   // del_help(out);
-  DBGLINE();
+  // DBGLINE();
 }
 
 template <typename T>
