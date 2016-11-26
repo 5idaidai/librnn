@@ -159,8 +159,9 @@ void lstm() {
   int seq_length = tf::param.seq_length;
 
   // data I/O
-  // std::ifstream data_file("data/in3.txt");
-  std::ifstream data_file("data/alpha.txt");
+  std::ifstream data_file("data/ptb.valid.txt");
+  // std::ifstream data_file("data/news.txt");
+  // std::ifstream data_file("data/alpha.txt");
   std::stringstream buffer;
   buffer << data_file.rdbuf();
   data_file.close();
@@ -201,7 +202,7 @@ void lstm() {
   std::vector<int> targets;
 
   timer::timer t;
-
+  float costs = 0;
   tf::rnn<float> ptb(100, 80, 25);
   int mod = 100;
   for (auto n = 0; n < tf::param.max_epoch; ++n) {
@@ -222,15 +223,19 @@ void lstm() {
     ptb.session_run(inputs, targets);
     ptb.forward();
     loss = ptb.get_loss();
+    costs += loss;
     ptb.backward();
     ptb.update();
 
+    p += tf::param.seq_length; // move data pointer
+
     smooth_loss = smooth_loss * 0.999 + loss * 0.001;
     if (n % mod == 0) {
+      std::string s_perplexity = "[perplexity: " + std::to_string(std::exp(costs/p)) + "]";
       std::string s_cps        = "[chars/sec = " + std::to_string((mod*tf::param.seq_length)/(t.elapsed())) + "]";
       std::string s_iteration  = "[iteration: "  + std::to_string(n)           + "]";
       std::string s_loss       = "[loss = "      + std::to_string(smooth_loss) + "]";
-      std::cout << s_iteration << " " << s_loss << " " << s_cps << std::endl; // print progress
+      std::cout << s_iteration << " " << s_loss << " " << s_perplexity << " " << s_cps << std::endl; // print progress
       t.restart();
     }
 
@@ -241,7 +246,6 @@ void lstm() {
 
     inputs.clear();
     targets.clear();
-    p += tf::param.seq_length; // move data pointer
   }
 
   return;
